@@ -102,7 +102,14 @@ inline void vector_emplace_back(std::vector<T> *vector, V &&data) {
   };
 #endif  // FLATBUFFERS_CPP98_STL
 
-#ifndef __BORLANDC__
+#ifdef __BORLANDC__
+  //TODO: does not work right now because C++Builder have neither static_assert nor is_scalar
+  template <typename T> struct is_scalar
+  {
+    enum {value = false};
+  };
+
+#else
   #if !(defined(_MSC_VER) && _MSC_VER <= 1700 /* MSVC2012 */)
     #ifndef FLATBUFFERS_CPP98_STL
       template <typename T> using is_scalar = std::is_scalar<T>;

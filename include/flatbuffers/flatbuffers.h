@@ -1948,13 +1948,13 @@ class Table {
   }
 
   template<typename T> T GetField(voffset_t field, T defaultval) const {
-    auto field_offset = GetOptionalFieldOffset(field);
+    voffset_t field_offset = GetOptionalFieldOffset(field);
     return field_offset ? ReadScalar<T>(data_ + field_offset) : defaultval;
   }
 
   template<typename P> P GetPointer(voffset_t field) {
-    auto field_offset = GetOptionalFieldOffset(field);
-    auto p = data_ + field_offset;
+    voffset_t field_offset = GetOptionalFieldOffset(field);
+    uint8_t * p = data_ + field_offset;
     return field_offset ? reinterpret_cast<P>(p + ReadScalar<uoffset_t>(p))
                         : nullptr;
   }
@@ -1963,20 +1963,20 @@ class Table {
   }
 
   template<typename P> P GetStruct(voffset_t field) const {
-    auto field_offset = GetOptionalFieldOffset(field);
-    auto p = const_cast<uint8_t *>(data_ + field_offset);
+    voffset_t field_offset = GetOptionalFieldOffset(field);
+    uint8_t * p = const_cast<uint8_t *>(data_ + field_offset);
     return field_offset ? reinterpret_cast<P>(p) : nullptr;
   }
 
   template<typename T> bool SetField(voffset_t field, T val, T def) {
-    auto field_offset = GetOptionalFieldOffset(field);
+    voffset_t field_offset = GetOptionalFieldOffset(field);
     if (!field_offset) return val == def;
     WriteScalar(data_ + field_offset, val);
     return true;
   }
 
   bool SetPointer(voffset_t field, const uint8_t *val) {
-    auto field_offset = GetOptionalFieldOffset(field);
+    voffset_t field_offset = GetOptionalFieldOffset(field);
     if (!field_offset) return false;
     WriteScalar(data_ + field_offset,
                 static_cast<uoffset_t>(val - (data_ + field_offset)));
@@ -1984,7 +1984,7 @@ class Table {
   }
 
   uint8_t *GetAddressOf(voffset_t field) {
-    auto field_offset = GetOptionalFieldOffset(field);
+    voffset_t field_offset = GetOptionalFieldOffset(field);
     return field_offset ? data_ + field_offset : nullptr;
   }
   const uint8_t *GetAddressOf(voffset_t field) const {
@@ -2012,7 +2012,7 @@ class Table {
   bool VerifyField(const Verifier &verifier, voffset_t field) const {
     // Calling GetOptionalFieldOffset should be safe now thanks to
     // VerifyTable().
-    auto field_offset = GetOptionalFieldOffset(field);
+    voffset_t field_offset = GetOptionalFieldOffset(field);
     // Check the actual field.
     return !field_offset || verifier.Verify<T>(data_ + field_offset);
   }
@@ -2020,19 +2020,19 @@ class Table {
   // VerifyField for required fields.
   template<typename T>
   bool VerifyFieldRequired(const Verifier &verifier, voffset_t field) const {
-    auto field_offset = GetOptionalFieldOffset(field);
+    voffset_t field_offset = GetOptionalFieldOffset(field);
     return verifier.Check(field_offset != 0) &&
            verifier.Verify<T>(data_ + field_offset);
   }
 
   // Versions for offsets.
   bool VerifyOffset(const Verifier &verifier, voffset_t field) const {
-    auto field_offset = GetOptionalFieldOffset(field);
+    voffset_t field_offset = GetOptionalFieldOffset(field);
     return !field_offset || verifier.VerifyOffset(data_ + field_offset);
   }
 
   bool VerifyOffsetRequired(const Verifier &verifier, voffset_t field) const {
-    auto field_offset = GetOptionalFieldOffset(field);
+    voffset_t field_offset = GetOptionalFieldOffset(field);
     return verifier.Check(field_offset != 0) &&
            verifier.VerifyOffset(data_ + field_offset);
   }
