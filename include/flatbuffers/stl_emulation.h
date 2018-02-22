@@ -20,7 +20,9 @@
 // clang-format off
 
 #include <string>
+#ifndef __BORLANDC__
 #include <type_traits>
+#endif
 #include <vector>
 #include <memory>
 #include <limits>
@@ -59,6 +61,7 @@ template <typename T> inline const T *vector_data(
   return vector.empty() ? nullptr : &vector[0];
 }
 
+#ifndef __BORLANDC__
 template <typename T, typename V>
 inline void vector_emplace_back(std::vector<T> *vector, V &&data) {
   #if defined(FLATBUFFERS_CPP98_STL)
@@ -67,6 +70,7 @@ inline void vector_emplace_back(std::vector<T> *vector, V &&data) {
     vector->emplace_back(std::forward<V>(data));
   #endif  // defined(FLATBUFFERS_CPP98_STL)
 }
+#endif
 
 #ifndef FLATBUFFERS_CPP98_STL
   #if !(defined(_MSC_VER) && _MSC_VER <= 1700 /* MSVC2012 */)
@@ -98,28 +102,30 @@ inline void vector_emplace_back(std::vector<T> *vector, V &&data) {
   };
 #endif  // FLATBUFFERS_CPP98_STL
 
-#if !(defined(_MSC_VER) && _MSC_VER <= 1700 /* MSVC2012 */)
-  #ifndef FLATBUFFERS_CPP98_STL
-    template <typename T> using is_scalar = std::is_scalar<T>;
-    template <typename T, typename U> using is_same = std::is_same<T,U>;
-    template <typename T> using is_floating_point = std::is_floating_point<T>;
-    template <typename T> using is_unsigned = std::is_unsigned<T>;
+#ifndef __BORLANDC__
+  #if !(defined(_MSC_VER) && _MSC_VER <= 1700 /* MSVC2012 */)
+    #ifndef FLATBUFFERS_CPP98_STL
+      template <typename T> using is_scalar = std::is_scalar<T>;
+      template <typename T, typename U> using is_same = std::is_same<T,U>;
+      template <typename T> using is_floating_point = std::is_floating_point<T>;
+      template <typename T> using is_unsigned = std::is_unsigned<T>;
+    #else
+      // Map C++ TR1 templates defined by stlport.
+      template <typename T> using is_scalar = std::tr1::is_scalar<T>;
+      template <typename T, typename U> using is_same = std::tr1::is_same<T,U>;
+      template <typename T> using is_floating_point =
+          std::tr1::is_floating_point<T>;
+      template <typename T> using is_unsigned = std::tr1::is_unsigned<T>;
+    #endif  // !FLATBUFFERS_CPP98_STL
   #else
-    // Map C++ TR1 templates defined by stlport.
-    template <typename T> using is_scalar = std::tr1::is_scalar<T>;
-    template <typename T, typename U> using is_same = std::tr1::is_same<T,U>;
-    template <typename T> using is_floating_point =
-        std::tr1::is_floating_point<T>;
-    template <typename T> using is_unsigned = std::tr1::is_unsigned<T>;
-  #endif  // !FLATBUFFERS_CPP98_STL
-#else
-  // MSVC 2010 doesn't support C++11 aliases.
-  template <typename T> struct is_scalar : public std::is_scalar<T> {};
-  template <typename T, typename U> struct is_same : public std::is_same<T,U> {};
-  template <typename T> struct is_floating_point :
-        public std::is_floating_point<T> {};
-  template <typename T> struct is_unsigned : public std::is_unsigned<T> {};
-#endif  // !(defined(_MSC_VER) && _MSC_VER <= 1700 /* MSVC2012 */)
+    // MSVC 2010 doesn't support C++11 aliases.
+    template <typename T> struct is_scalar : public std::is_scalar<T> {};
+    template <typename T, typename U> struct is_same : public std::is_same<T,U> {};
+    template <typename T> struct is_floating_point :
+          public std::is_floating_point<T> {};
+    template <typename T> struct is_unsigned : public std::is_unsigned<T> {};
+  #endif  // !(defined(_MSC_VER) && _MSC_VER <= 1700 /* MSVC2012 */)
+#endif
 
 #ifndef FLATBUFFERS_CPP98_STL
   #if !(defined(_MSC_VER) && _MSC_VER <= 1700 /* MSVC2012 */)
@@ -159,7 +165,9 @@ inline void vector_emplace_back(std::vector<T> *vector, V &&data) {
 
     unique_ptr() : ptr_(nullptr) {}
     explicit unique_ptr(T* p) : ptr_(p) {}
+  #ifndef __BORLANDC__
     unique_ptr(unique_ptr&& u) : ptr_(nullptr) { reset(u.release()); }
+  #endif
     unique_ptr(const unique_ptr& u) : ptr_(nullptr) {
       reset(const_cast<unique_ptr*>(&u)->release());
     }
@@ -169,12 +177,12 @@ inline void vector_emplace_back(std::vector<T> *vector, V &&data) {
       reset(const_cast<unique_ptr*>(&u)->release());
       return *this;
     }
-
+  #ifndef __BORLANDC__
     unique_ptr& operator=(unique_ptr&& u) {
       reset(u.release());
       return *this;
     }
-
+  #endif
     unique_ptr& operator=(T* p) {
       reset(p);
       return *this;
@@ -183,7 +191,7 @@ inline void vector_emplace_back(std::vector<T> *vector, V &&data) {
     const T& operator*() const { return *ptr_; }
     T* operator->() const { return ptr_; }
     T* get() const noexcept { return ptr_; }
-    explicit operator bool() const { return ptr_ != nullptr; }
+    operator bool() const { return ptr_ != nullptr; }
 
     // modifiers
     T* release() {

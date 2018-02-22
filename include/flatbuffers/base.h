@@ -9,8 +9,14 @@
 
 #include <assert.h>
 
-#ifndef ARDUINO
+#if !defined(ARDUINO) && !defined(__BORLANDC__)
 #include <cstdint>
+#endif
+
+#ifdef __BORLANDC__
+#define noexcept
+#define static_assert_(e, name) enum { struct_size_assert_##name = 1/(!!(e)) }
+#define static_assert(e, t) static_assert_(e, __LINE__)
 #endif
 
 #include <cstddef>
@@ -31,7 +37,9 @@
 #endif
 
 #include <string>
+#ifndef __BORLANDC__
 #include <type_traits>
+#endif
 #include <vector>
 #include <set>
 #include <algorithm>
@@ -48,31 +56,38 @@
 #include "flatbuffers/stl_emulation.h"
 
 /// @cond FLATBUFFERS_INTERNAL
-#if __cplusplus <= 199711L && \
-    (!defined(_MSC_VER) || _MSC_VER < 1600) && \
-    (!defined(__GNUC__) || \
-      (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__ < 40400))
-  #error A C++11 compatible compiler with support for the auto typing is \
-         required for FlatBuffers.
-  #error __cplusplus _MSC_VER __GNUC__  __GNUC_MINOR__  __GNUC_PATCHLEVEL__
-#endif
-
-#if !defined(__clang__) && \
-    defined(__GNUC__) && \
-    (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__ < 40600)
-  // Backwards compatability for g++ 4.4, and 4.5 which don't have the nullptr
-  // and constexpr keywords. Note the __clang__ check is needed, because clang
-  // presents itself as an older GNUC compiler.
-  #ifndef nullptr_t
-    const class nullptr_t {
-    public:
-      template<class T> inline operator T*() const { return 0; }
-    private:
-      void operator&() const;
-    } nullptr = {};
+#ifndef __BORLANDC__
+  #if __cplusplus <= 199711L && \
+      (!defined(_MSC_VER) || _MSC_VER < 1600) && \
+      (!defined(__GNUC__) || \
+        (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__ < 40400))
+    #error A C++11 compatible compiler with support for the auto typing is \
+          required for FlatBuffers.
+    #error __cplusplus _MSC_VER __GNUC__  __GNUC_MINOR__  __GNUC_PATCHLEVEL__
   #endif
-  #ifndef constexpr
-    #define constexpr const
+#endif // __BORLANDC__
+
+#ifdef __BORLANDC__
+  #define nullptr 0
+  #define constexpr const
+#else
+  #if !defined(__clang__) && \
+      defined(__GNUC__) && \
+      (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__ < 40600)
+    // Backwards compatability for g++ 4.4, and 4.5 which don't have the nullptr
+    // and constexpr keywords. Note the __clang__ check is needed, because clang
+    // presents itself as an older GNUC compiler.
+    #ifndef nullptr_t
+      const class nullptr_t {
+      public:
+        template<class T> inline operator T*() const { return 0; }
+      private:
+        void operator&() const;
+      } nullptr = {};
+    #endif
+    #ifndef constexpr
+      #define constexpr const
+    #endif
   #endif
 #endif
 
@@ -94,6 +109,8 @@
     #else
       #define FLATBUFFERS_LITTLEENDIAN 1
     #endif
+  #elif defined(__BORLANDC__)
+      #define FLATBUFFERS_LITTLEENDIAN 1
   #else
     #error Unable to determine endianness, define FLATBUFFERS_LITTLEENDIAN.
   #endif
@@ -106,7 +123,8 @@
 #define FLATBUFFERS_STRING(X) FLATBUFFERS_STRING_EXPAND(X)
 
 #if (!defined(_MSC_VER) || _MSC_VER > 1600) && \
-    (!defined(__GNUC__) || (__GNUC__ * 100 + __GNUC_MINOR__ >= 407))
+    (!defined(__GNUC__) || (__GNUC__ * 100 + __GNUC_MINOR__ >= 407)) && \
+    !defined(__BORLANDC__)
   #define FLATBUFFERS_FINAL_CLASS final
   #define FLATBUFFERS_OVERRIDE override
 #else
@@ -115,7 +133,8 @@
 #endif
 
 #if (!defined(_MSC_VER) || _MSC_VER >= 1900) && \
-    (!defined(__GNUC__) || (__GNUC__ * 100 + __GNUC_MINOR__ >= 406))
+    (!defined(__GNUC__) || (__GNUC__ * 100 + __GNUC_MINOR__ >= 406)) && \
+    !defined(__BORLANDC__)
   #define FLATBUFFERS_CONSTEXPR constexpr
 #else
   #define FLATBUFFERS_CONSTEXPR
@@ -131,7 +150,8 @@
 // NOTE: the FLATBUFFERS_DELETE_FUNC macro may change the access mode to
 // private, so be sure to put it at the end or reset access mode explicitly.
 #if (!defined(_MSC_VER) || _MSC_FULL_VER >= 180020827) && \
-    (!defined(__GNUC__) || (__GNUC__ * 100 + __GNUC_MINOR__ >= 404))
+    (!defined(__GNUC__) || (__GNUC__ * 100 + __GNUC_MINOR__ >= 404)) && \
+    !defined(__BORLANDC__)
   #define FLATBUFFERS_DELETE_FUNC(func) func = delete;
 #else
   #define FLATBUFFERS_DELETE_FUNC(func) private: func;
