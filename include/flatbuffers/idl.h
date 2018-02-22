@@ -846,6 +846,12 @@ bool GenerateJavaGRPC(const Parser &parser,
                       const std::string &path,
                       const std::string &file_name);
 
+
+// Generate a C++Builder header from the definitions in the Parser object.
+// See idl_gen_cpp.
+extern bool GenerateBCC(const Parser &parser,
+                        const std::string &path,
+                        const std::string &file_name);
 }  // namespace flatbuffers
 
 #endif  // FLATBUFFERS_IDL_H_
