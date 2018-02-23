@@ -562,7 +562,7 @@ class CppGenerator : public BaseGenerator {
           return "std::vector<" + type_name + "," +
                  native_custom_alloc->constant + "<" + type_name + "> >";
         } else
-          return "std::vector<" + type_name + ">";
+          return "std::vector<" + type_name + " >";
       }
       case BASE_TYPE_STRUCT: {
         auto type_name = WrapInNameSpace(*type.struct_def);
@@ -986,9 +986,6 @@ class CppGenerator : public BaseGenerator {
       code_ += "  void *value;";
       code_ += "";
       code_ += "  {{NAME}}Union() : type({{NONE}}), value(nullptr) {}";
-      code_ += "  {{NAME}}Union({{NAME}}Union&& u) FLATBUFFERS_NOEXCEPT :";
-      code_ += "    type({{NONE}}), value(nullptr)";
-      code_ += "    { std::swap(type, u.type); std::swap(value, u.value); }";
       code_ += "  {{NAME}}Union(const {{NAME}}Union &) FLATBUFFERS_NOEXCEPT;";
       code_ +=
           "  {{NAME}}Union &operator=(const {{NAME}}Union &u) "
@@ -996,11 +993,6 @@ class CppGenerator : public BaseGenerator {
       code_ +=
           "    { {{NAME}}Union t(u); std::swap(type, t.type); std::swap(value, "
           "t.value); return *this; }";
-      code_ +=
-          "  {{NAME}}Union &operator=({{NAME}}Union &&u) FLATBUFFERS_NOEXCEPT";
-      code_ +=
-          "    { std::swap(type, u.type); std::swap(value, u.value); return "
-          "*this; }";
       code_ += "  ~{{NAME}}Union() { Reset(); }";
       code_ += "";
       code_ += "  void Reset();";
@@ -1128,7 +1120,7 @@ class CppGenerator : public BaseGenerator {
         code_.SetValue("LABEL", GetEnumValUse(enum_def, ev));
         code_.SetValue("TYPE", GetUnionElement(ev, true, true));
         code_ += "    case {{LABEL}}: {";
-        code_ += "      auto ptr = reinterpret_cast<const {{TYPE}} *>(obj);";
+        code_ += "      const {{TYPE}} * ptr = reinterpret_cast<const {{TYPE}} *>(obj);";
         if (ev.union_type.base_type == BASE_TYPE_STRUCT) {
           if (ev.union_type.struct_def->fixed) {
             code_ += "      return new " +
@@ -1161,7 +1153,7 @@ class CppGenerator : public BaseGenerator {
                                   ev.union_type.struct_def, parser_.opts));
         code_.SetValue("NAME", GetUnionElement(ev, false, true));
         code_ += "    case {{LABEL}}: {";
-        code_ += "      auto ptr = reinterpret_cast<const {{TYPE}} *>(value);";
+        code_ += "      const {{TYPE}} * ptr = reinterpret_cast<const {{TYPE}} *>(value);";
         if (ev.union_type.base_type == BASE_TYPE_STRUCT) {
           if (ev.union_type.struct_def->fixed) {
             code_ += "      return _fbb.CreateStruct(*ptr).Union();";
@@ -1240,7 +1232,7 @@ class CppGenerator : public BaseGenerator {
                        NativeName(GetUnionElement(ev, true, true, true),
                                   ev.union_type.struct_def, parser_.opts));
         code_ += "    case {{LABEL}}: {";
-        code_ += "      auto ptr = reinterpret_cast<{{TYPE}} *>(value);";
+        code_ += "      {{TYPE}} * ptr = reinterpret_cast<{{TYPE}} *>(value);";
         code_ += "      delete ptr;";
         code_ += "      break;";
         code_ += "    }";
@@ -2213,7 +2205,7 @@ class CppGenerator : public BaseGenerator {
       // Generate the X::UnPack() method.
       code_ += "inline " +
                TableUnPackSignature(struct_def, false, parser_.opts) + " {";
-      code_ += "  auto _o = new {{NATIVE_NAME}}();";
+      code_ += "  {{NATIVE_NAME}}* _o = new {{NATIVE_NAME}}();";
       code_ += "  UnPackTo(_o, _resolver);";
       code_ += "  return _o;";
       code_ += "}";
@@ -2237,7 +2229,9 @@ class CppGenerator : public BaseGenerator {
             GenUnpackFieldStatement(field, is_union ? *(it + 1) : nullptr);
 
         code_.SetValue("FIELD_NAME", Name(field));
-        auto prefix = "  { auto _e = {{FIELD_NAME}}(); ";
+        code_.SetValue("FIELD_TYPE",
+                       GenTypeGet(field.value.type, " ", "const ", " *", false));
+        auto prefix = "  { {{FIELD_TYPE}} _e = {{FIELD_NAME}}(); ";
         auto check = IsScalar(field.value.type.base_type) ? "" : "if (_e) ";
         auto postfix = " };";
         code_ += std::string(prefix) + check + statement + postfix;
