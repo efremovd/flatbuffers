@@ -2266,7 +2266,38 @@ class CppGenerator : public BaseGenerator {
            it != struct_def.fields.vec.end(); ++it) {
         auto &field = **it;
         if (field.deprecated) { continue; }
-        code_ += "  auto _" + Name(field) + " = " + GenCreateParam(field) + ";";
+        std::string fieldtype = "auto";
+        switch(field.value.type.base_type) {
+          case BASE_TYPE_STRING:
+            fieldtype = "flatbuffers::Offset<flatbuffers::String>";
+            break;
+          case BASE_TYPE_VECTOR:
+            fieldtype = "flatbuffers::Offset<flatbuffers::Vector<";
+            switch(field.value.type.element) {
+              case BASE_TYPE_UCHAR:
+                fieldtype += "uint8_t";
+                break;
+              case BASE_TYPE_USHORT:
+                fieldtype += "uint16_t";
+                break;
+              case BASE_TYPE_UINT:
+                fieldtype += "uint32_t";
+                break;
+              case BASE_TYPE_ULONG:
+                fieldtype += "uint64_t";
+                break;
+              case BASE_TYPE_STRING:
+                fieldtype += "flatbuffers::Offset<flatbuffers::String> ";
+                break;
+              default:
+                break;
+              }
+            fieldtype += "> >";
+            break;
+          default:
+            break;
+        }
+        code_ += "  " + fieldtype + " _" + Name(field) + " = " + GenCreateParam(field) + ";";
       }
       // Need to call "Create" with the struct namespace.
       const auto qualified_create_name =
