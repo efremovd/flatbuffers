@@ -17,6 +17,7 @@
 #define noexcept
 #define static_assert_(e, name) enum { struct_size_assert_##name = 1/(!!(e)) }
 #define static_assert(e, t) static_assert_(e, __LINE__)
+#define FLATBUFFERS_CPP98_STL
 #endif
 
 #include <cstddef>
