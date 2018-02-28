@@ -74,6 +74,9 @@ int main(int argc, const char *argv[]) {
     { flatbuffers::GenerateJsonSchema, nullptr, "--jsonschema", "JsonSchema",
       true, nullptr, flatbuffers::IDLOptions::kJsonSchema,
       "Generate Json schema", flatbuffers::GeneralMakeRule },
+    { flatbuffers::GenerateBCC, nullptr, "--bcc", "C++Builder", true,
+      nullptr, flatbuffers::IDLOptions::kCpp,
+      "Generate C++ Builder headers for tables/structs", flatbuffers::CPPMakeRule },
   };
 
   flatbuffers::FlatCompiler::InitParams params;

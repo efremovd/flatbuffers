@@ -430,7 +430,7 @@ struct IDLOptions {
         skip_unexpected_fields_in_json(false),
         generate_name_strings(false),
         generate_object_based_api(false),
-        cpp_object_api_pointer_type("std::unique_ptr"),
+        cpp_object_api_pointer_type("flatbuffers::unique_ptr"),
         gen_nullable(false),
         object_suffix("T"),
         union_value_namespacing(true),
@@ -846,6 +846,12 @@ bool GenerateJavaGRPC(const Parser &parser,
                       const std::string &path,
                       const std::string &file_name);
 
+
+// Generate a C++Builder header from the definitions in the Parser object.
+// See idl_gen_cpp.
+extern bool GenerateBCC(const Parser &parser,
+                        const std::string &path,
+                        const std::string &file_name);
 }  // namespace flatbuffers
 
 #endif  // FLATBUFFERS_IDL_H_
